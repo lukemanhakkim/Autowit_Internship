@@ -1,4 +1,6 @@
-﻿$str1 = "
+﻿#To list the NIC and Global variable details in a file
+
+$str1 = "
 ################################################
 The NIC information for the current laptop is -
 ################################################
