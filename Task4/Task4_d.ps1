@@ -5,7 +5,7 @@
 $base_url = "https://dev81611.service-now.com/"
 
 #credentials
-$username = "<username>"
+$username = "admin"
 $password = "<password>"
 
 #Defining headers

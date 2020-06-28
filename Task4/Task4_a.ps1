@@ -5,8 +5,8 @@
 $base_url = "https://dev81611.service-now.com/"
 
 #credentials
-$username = "<username>"
-$password = "<password>"
+$username = "admin"
+$password = "Hakkim28."
 
 #Defining headers
 $base64auth = [convert]::TOBase64string([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $username, $password)))
@@ -21,11 +21,12 @@ $headers.Add('Content-Type','application/xml')
 #set TLS version
 [Net.ServicePointManager]::SecurityProtocol = [Net.securityprotocoltype]::Tls12
 
+#To read the user input
+$TicketNum = Read-Host "Enter the ticket number to fetch the details"
+
 #End point uri
 #using ticket id
-$uri = $base_url + "api/now/v1/table/incident?number=INC0009009"
-#using sys id
-#$uri = $base_url + "api/now/v1/table/incident/ 57af7aec73d423002728660c4cf6a71c"
+$uri = $base_url + "api/now/v1/table/incident?number=$TicketNum"
 
 #specify HTTP method:
 $method = "get"
