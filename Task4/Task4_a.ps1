@@ -5,7 +5,7 @@
 $base_url = "https://dev81611.service-now.com/"
 
 #credentials
-$username = "admin"
+$username = "<username>"
 $password = "<password>"
 
 #Defining headers
@@ -25,8 +25,7 @@ $headers.Add('Content-Type','application/xml')
 #using ticket id
 $uri = $base_url + "api/now/v1/table/incident?number=INC0009009"
 #using sys id
-    #$uri = $base_url + "api/now/v1/table/incident/a4cc6bbddbfc1010542c8a18489619ee"
-
+#$uri = $base_url + "api/now/v1/table/incident/ 57af7aec73d423002728660c4cf6a71c"
 
 #specify HTTP method:
 $method = "get"
