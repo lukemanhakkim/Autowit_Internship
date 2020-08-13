@@ -1,7 +1,4 @@
-﻿<# 
-Author: Lukeman Hakkim Sheik Alavudeen
-
-FIREWALL WHITELISTING CLOUD PLATFORM
+﻿<# FIREWALL WHITELISTING CLOUD PLATFORM
 
 Step 1 : Login to Google cloud platform API
 	Success : Continue to next step.
@@ -29,14 +26,14 @@ $ErrorAction = 'silentlycontinue'
 
 #Authenticate using the service account
 
-$JsonPath = Read-host "Enter json key path to activate service account" 
+#$JsonPath = Read-host "Enter json key path to activate service account" 
 $ServiceAccountName = read-host "Enter service account name"
 $PortNum = read-host "Enter the port number"
 $Protocol = read-host "Enter the protocol"
 $VirtAddr = read-host "Enter the virtual address name"
 
 
-gcloud auth activate-service-account --key-file=$JsonPath
+gcloud auth activate-service-account --key-file=$home\Desktop\phonic-scheme-282817-78f90fb4468e.json
 
 $AccountsList = gcloud iam service-accounts list
 
